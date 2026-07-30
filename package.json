@@ -9,9 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@react-three/drei": "^9.88.0",
-    "@react-three/fiber": "^9.6.1",
-    "@react-three/postprocessing": "^3.0.4",
     "fabric": "^7.4.0",
     "firebase": "^12.13.0",
     "framer-motion": "^12.38.0",
@@ -21,12 +18,10 @@
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
     "next-cloudinary": "^6.17.5",
-    "postprocessing": "^6.39.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-konva": "^18.2.10",
     "resend": "^6.12.4",
-    "three": "^0.184.0",
     "zustand": "^4.5.2"
   },
   "devDependencies": {
