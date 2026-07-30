@@ -37,13 +37,13 @@ const VIDEOS = [
 const TEAM = [
   {
     name: 'RYAN ODETTE',
-    role: 'Founder & Creative Visionary',
-    statement: 'Set the vision. Built the movement.',
+    role: 'Founder ',
+    statement: 'Start now!.',
   },
   {
     name: 'RANSLEY OGALO',
-    role: 'Digital Architect',
-    statement: 'Coded the future. No cap.',
+    role: 'Manager',
+    statement: ' More to come',
   },
 ];
 
@@ -314,142 +314,7 @@ export default function HomePage() {
         <Hero />
       </motion.div>
 
-      {/* ═══════════════ LAUNCH BANNER ═══════════════ */}
-      <section
-        style={{
-          position: 'relative',
-          padding: 'clamp(40px, 8vw, 60px) clamp(20px, 5vw, 48px)',
-          borderBottom: '1px solid rgba(201,78,10,0.2)',
-          background: 'rgba(6,6,6,0.8)',
-          zIndex: 2,
-        }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <p
-              style={{
-                fontSize: 'clamp(10px, 2vw, 12px)',
-                letterSpacing: '0.3em',
-                color: '#C94E0A',
-                margin: '0 0 16px',
-                fontWeight: 900,
-              }}>
-              GUNFITS GOES GLOBAL
-            </p>
-            <h2
-              style={{
-                fontSize: 'clamp(1.8rem, 6vw, 3rem)',
-                fontWeight: 900,
-                margin: 0,
-                letterSpacing: '0.05em',
-              }}>
-              21ST JUNE
-            </h2>
-          </motion.div>
-
-
-
-          {/* Email Capture + Instagram CTA */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(200px, 45vw, 400px), 1fr))',
-              gap: 'clamp(12px, 3vw, 20px)',
-              maxWidth: '900px',
-              margin: '0 auto',
-            }}>
-            {/* Email Form */}
-            <form onSubmit={handleEmailSubmit} className="responsive-form-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div className="responsive-form-row" style={{ display: 'flex', gap: '8px' }}>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your email"
-                  style={{
-                    flex: 1,
-                    background: 'rgba(0,0,0,0.3)',
-                    border: '1px solid rgba(201,78,10,0.2)',
-                    color: '#EEEBE3',
-                    padding: '12px 16px',
-                    fontSize: '13px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                  }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = '#C94E0A')}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201,78,10,0.2)')}
-                  disabled={emailLoading}
-                />
-                <motion.button
-                  type="submit"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  disabled={emailLoading}
-                  style={{
-                    background: emailLoading ? '#333333' : '#C94E0A',
-                    color: emailLoading ? '#666666' : '#EEEBE3',
-                    border: 'none',
-                    padding: '12px 24px',
-                    fontSize: '11px',
-                    fontWeight: 900,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    cursor: emailLoading ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s',
-                    whiteSpace: 'nowrap',
-                  }}>
-                  {emailLoading ? 'SAVING...' : 'JOIN'}
-                </motion.button>
-              </div>
-              <AnimatePresence>
-                {emailStatus && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    style={{
-                      fontSize: '11px',
-                      color: emailStatus.includes('✓') ? '#44cc44' : '#ff6666',
-                      margin: 0,
-                      letterSpacing: '0.05em',
-                    }}>
-                    {emailStatus}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </form>
-
-            {/* Instagram CTA */}
-            <Link href="https://instagram.com/gun_fits" target="_blank" rel="noopener noreferrer">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid rgba(201,78,10,0.4)',
-                  color: '#EEEBE3',
-                  padding: '12px 24px',
-                  fontSize: '11px',
-                  fontWeight: 900,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  width: '100%',
-                }}>
-                FOLLOW @gun_fits (689)
-              </motion.button>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
+    
 
       {/* ═══════════════ VIDEO SECTION ═══════════════ */}
       <section
@@ -710,7 +575,7 @@ export default function HomePage() {
                   borderRadius: '2px',
                   transition: 'all 0.2s',
                 }}>
-                FULL STORY ↗
+              
               </motion.button>
             </Link>
           </motion.div>

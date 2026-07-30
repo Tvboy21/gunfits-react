@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 const TEAM_PREVIEW = [
-  { name: 'RYAN ODETTE', role: 'Founder & Creative Visionary' },
-  { name: 'RANSLEY OGALO', role: 'Digital Architect' },
+  { name: 'RYAN ODETTE', role: 'Founder' },
+  { name: 'RANSLEY OGALO', role: 'Manager' },
 ];
 
 export default function AboutSneakPeek() {
