@@ -10,8 +10,10 @@ const Lightning = ({ hue = 230, xOffset = 0, speed = 1, intensity = 1, size = 1 
     if (!canvas) return;
 
     const resizeCanvas = () => {
-      canvas.width = canvas.clientWidth;
-      canvas.height = canvas.clientHeight;
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.max(Math.floor(rect.width * dpr), 1);
+      canvas.height = Math.max(Math.floor(rect.height * dpr), 1);
     };
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);

@@ -25,8 +25,10 @@ export default function Products() {
       {/* Lightning background */}
       <div style={{ 
   position: 'absolute', 
-  inset: 0, 
+  inset: '-8% 0 -6% 0',
   zIndex: 0,
+  minHeight: '420px',
+  pointerEvents: 'none',
   willChange: 'transform'
 }}>
   <Lightning

@@ -18,10 +18,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "GUNFITS",
   description: "Nairobi Urban Apparel",
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-  },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({
