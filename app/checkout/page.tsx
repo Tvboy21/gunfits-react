@@ -20,8 +20,7 @@ const [email, setEmail] = useState('');
   const [error, setError] = useState('');
 
 const subtotal = cart.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
-  const shipping = 500;
-  const total = subtotal + shipping;
+  const total = subtotal;
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,10 +175,6 @@ const subtotal = cart.reduce((sum: number, item: any) => sum + item.price * item
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                   <span style={{ fontSize: '12px', color: '#888888' }}>SUBTOTAL</span>
                   <span style={{ fontSize: '12px', color: '#EEEBE3', fontWeight: 700 }}>KES {subtotal.toLocaleString()}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <span style={{ fontSize: '12px', color: '#888888' }}>SHIPPING</span>
-                  <span style={{ fontSize: '12px', color: '#EEEBE3', fontWeight: 700 }}>KES {shipping.toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '16px', borderTop: '1px solid rgba(201,78,10,0.2)' }}>
                   <span style={{ fontSize: '14px', fontWeight: 900, color: '#EEEBE3', textTransform: 'uppercase', letterSpacing: '0.1em' }}>TOTAL</span>
