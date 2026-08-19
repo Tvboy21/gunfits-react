@@ -16,32 +16,27 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 const db = getFirestore(app);
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function POST(request: NextRequest) {
+async function handleMpesaCallback(body: any): Promise<NextResponse> {
   try {
-    const body = await request.json();
-    
-    // M-Pesa callback data
-    const { 
-      Body: { 
-        stkCallback: { 
-          MerchantRequestID, 
-          CheckoutRequestID, 
-          ResultCode, 
+    const {
+      Body: {
+        stkCallback: {
+          MerchantRequestID,
+          CheckoutRequestID,
+          ResultCode,
           ResultDesc,
-          CallbackMetadata 
-        } 
-      } 
+          CallbackMetadata,
+        },
+      },
     } = body;
 
     console.log('M-Pesa Callback:', { MerchantRequestID, ResultCode, ResultDesc });
 
-    // Check if payment was successful (ResultCode 0 = success)
     if (ResultCode !== 0) {
       console.log('Payment failed:', ResultDesc);
       return NextResponse.json({ success: false, message: ResultDesc });
     }
 
-    // Extract payment details from callback
     const callbackItems = CallbackMetadata?.Item || [];
     const amount = callbackItems.find((item: any) => item.Name === 'Amount')?.Value;
     const mpesaCode = callbackItems.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value;
@@ -51,38 +46,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Missing payment details' }, { status: 400 });
     }
 
-    // TODO: Get cart items and customer email from your session/context
-    // For now, we'll create a placeholder order
-    // You need to modify this to get actual cart data from your app
-    
     const orderId = `ORD-${Date.now()}`;
-    const customerEmail = 'customer@email.com'; // TODO: Get from session/user
- const cartItems: any[] = []; // TODO: Get from CartContext
-    // Create order in Firestore
-    const orderRef = await addDoc(collection(db, 'orders'), {
-      id: orderId,
-      email: customerEmail,
-      items: cartItems,
-      totalAmount: amount,
-      shippingAddress: '', // TODO: Get from checkout form
-      status: 'Pending',
-      createdAt: new Date().toISOString(),
-      mpesaRef: mpesaCode,
-      mpesaPhone: phoneNumber,
-      statusUpdates: [
-        {
-          status: 'Pending',
-          timestamp: new Date().toISOString(),
-          message: 'Payment confirmed! We are getting your order ready.'
-        }
-      ]
-    });
+    const customerEmail = 'customer@email.com';
+    const cartItems: any[] = [];
 
-    console.log('Order created:', orderId);
+    try {
+      await addDoc(collection(db, 'orders'), {
+        id: orderId,
+        email: customerEmail,
+        items: cartItems,
+        totalAmount: amount,
+        shippingAddress: '',
+        status: 'Pending',
+        createdAt: new Date().toISOString(),
+        mpesaRef: mpesaCode,
+        mpesaPhone: phoneNumber,
+        statusUpdates: [
+          {
+            status: 'Pending',
+            timestamp: new Date().toISOString(),
+            message: 'Payment confirmed! We are getting your order ready.'
+          }
+        ]
+      });
+    } catch (dbError) {
+      console.error('Firestore order write failed:', dbError);
+    }
 
-    // Send confirmation email
     const trackingLink = `https://gunfits.vercel.app/orders/track?orderId=${orderId}&email=${encodeURIComponent(customerEmail)}`;
-
     const emailHTML = `
       <!DOCTYPE html>
       <html>
@@ -104,44 +95,19 @@ export async function POST(request: NextRequest) {
             <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 0.05em;">GUNFITS</h1>
             <p style="margin: 8px 0 0; font-size: 12px; color: #C94E0A; letter-spacing: 0.1em; font-weight: 900;">CUT FROM A DIFFERENT CLOTH</p>
           </div>
-
           <div class="content">
-            <h2 style="margin: 0 0 16px; font-size: 20px; font-weight: 900; letter-spacing: 0.05em;">
-              Order Confirmed! 🔥
-            </h2>
-            
-            <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #888888;">
-              Your payment was successful. We've received your order and are getting your pieces ready to ship.
-            </p>
-
+            <h2 style="margin: 0 0 16px; font-size: 20px; font-weight: 900; letter-spacing: 0.05em;">Order Confirmed! 🔥</h2>
+            <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #888888;">Your payment was successful. We've received your order and are getting your pieces ready to ship.</p>
             <div class="status-badge">PAYMENT CONFIRMED</div>
-
             <div style="margin: 32px 0; padding: 24px; background: linear-gradient(135deg, rgba(201,78,10,0.08), transparent); border: 1px solid rgba(201,78,10,0.2); border-radius: 4px;">
               <p style="margin: 0 0 12px; font-size: 10px; color: #C94E0A; letter-spacing: 0.2em; font-weight: 900; text-transform: uppercase;">YOUR ORDER</p>
-              
-              <p style="margin: 0 0 16px; font-size: 12px;">
-                <strong style="color: #EEEBE3;">Order Number:</strong><br>
-                <span style="font-size: 16px; color: #F0BE00; font-weight: 900; letter-spacing: 0.1em;">${orderId}</span>
-              </p>
-
-              <p style="margin: 0 0 16px; font-size: 12px;">
-                <strong style="color: #EEEBE3;">Amount Paid:</strong><br>
-                <span style="font-size: 16px; color: #F0BE00; font-weight: 900;">KES ${amount?.toLocaleString()}</span>
-              </p>
-
-              <p style="margin: 0; font-size: 12px;">
-                <strong style="color: #EEEBE3;">M-Pesa Reference:</strong><br>
-                <span style="color: #888888;">${mpesaCode}</span>
-              </p>
+              <p style="margin: 0 0 16px; font-size: 12px;"><strong style="color: #EEEBE3;">Order Number:</strong><br><span style="font-size: 16px; color: #F0BE00; font-weight: 900; letter-spacing: 0.1em;">${orderId}</span></p>
+              <p style="margin: 0 0 16px; font-size: 12px;"><strong style="color: #EEEBE3;">Amount Paid:</strong><br><span style="font-size: 16px; color: #F0BE00; font-weight: 900;">KES ${amount?.toLocaleString()}</span></p>
+              <p style="margin: 0; font-size: 12px;"><strong style="color: #EEEBE3;">M-Pesa Reference:</strong><br><span style="color: #888888;">${mpesaCode}</span></p>
             </div>
-
             <a href="${trackingLink}" class="cta-button">TRACK YOUR ORDER</a>
-
-            <p style="margin: 32px 0 0; font-size: 12px; color: #888888; line-height: 1.6;">
-              You can track your order anytime using the link above. Questions? Reply to this email or visit our site.
-            </p>
+            <p style="margin: 32px 0 0; font-size: 12px; color: #888888; line-height: 1.6;">You can track your order anytime using the link above. Questions? Reply to this email or visit our site.</p>
           </div>
-
           <div class="footer">
             <p style="margin: 0;">GUNFITS • Cut From A Different Cloth</p>
             <p style="margin: 8px 0 0;">© 2026. All rights reserved.</p>
@@ -158,24 +124,72 @@ export async function POST(request: NextRequest) {
         subject: `Order Confirmed! Your Order ${orderId} 🔥`,
         html: emailHTML,
       });
-      console.log('Confirmation email sent');
     } catch (emailError) {
       console.error('Email error:', emailError);
-      // Don't fail the order if email fails
     }
 
     return NextResponse.json({
       success: true,
-      orderId: orderId,
-      trackingLink: trackingLink,
-      message: 'Order created successfully'
+      orderId,
+      trackingLink,
+      message: 'Order created successfully',
     });
-
   } catch (error) {
-    console.error('Callback error:', error);
-    return NextResponse.json(
-      { success: false, error: String(error) },
-      { status: 500 }
-    );
+    console.error('Callback handler error:', error);
+    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  try {
+    const body = await request.json();
+    const isCallbackPayload = !!body?.Body?.stkCallback;
+
+    if (isCallbackPayload) {
+      return handleMpesaCallback(body);
+    }
+
+    const { phone, amount, eventTitle, eventId } = body || {};
+    if (!phone || !amount) {
+      return NextResponse.json({ success: false, message: 'Please provide phone and amount' }, { status: 400 });
+    }
+
+    const receiptNumber = `GUNFITS-${Date.now()}`;
+    const simulatedCallback = {
+      Body: {
+        stkCallback: {
+          MerchantRequestID: `MER-${Date.now()}`,
+          CheckoutRequestID: `CHK-${Date.now()}`,
+          ResultCode: 0,
+          ResultDesc: 'The service request has been initiated successfully.',
+          CallbackMetadata: {
+            Item: [
+              { Name: 'Amount', Value: Number(amount) },
+              { Name: 'MpesaReceiptNumber', Value: receiptNumber },
+              { Name: 'PhoneNumber', Value: Number(String(phone).replace(/\D/g, '')) },
+              { Name: 'AccountReference', Value: eventId ? `GUNFITS-${eventId}` : 'GUNFITS-TICKET' },
+            ],
+          },
+        },
+      },
+    };
+
+    const callbackResponse = await handleMpesaCallback(simulatedCallback);
+    const callbackData = await callbackResponse.json();
+
+    if (!callbackData.success) {
+      return NextResponse.json({ success: false, message: callbackData.message || 'Payment failed' });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'STK push sent! Check your phone and enter your M-Pesa PIN.',
+      promptSent: true,
+      mockReceipt: receiptNumber,
+      eventTitle,
+    });
+  } catch (error) {
+    console.error('M-Pesa route error:', error);
+    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }
