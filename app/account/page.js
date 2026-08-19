@@ -69,7 +69,7 @@ export default function AccountPage() {
     <div style={{ background: '#060606', minHeight: '100vh' }}>
       <Navbar />
 
-      <main style={{ padding: '80px 48px', maxWidth: '1200px', margin: '0 auto' }}>
+      <main className="account-page-shell" style={{ padding: '80px 48px', maxWidth: '1200px', margin: '0 auto' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '48px' }}>
@@ -88,10 +88,10 @@ export default function AccountPage() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '32px', alignItems: 'start' }}>
+        <div className="account-layout" style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '32px', alignItems: 'start' }}>
 
           {/* Sidebar */}
-          <div style={{ background: '#111111', border: '1px solid #222222', borderTop: '3px solid #C94E0A', padding: '24px' }}>
+          <div className="account-sidebar" style={{ background: '#111111', border: '1px solid #222222', borderTop: '3px solid #C94E0A', padding: '24px' }}>
 
             {/* Avatar */}
             <div style={{
@@ -129,7 +129,7 @@ export default function AccountPage() {
             </div>
 
             {/* Nav tabs */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '24px' }}>
+            <div className="account-tabs" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '24px' }}>
               {tabs.map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)} style={{
                   background: activeTab === tab ? '#C94E0A' : 'transparent',
@@ -173,7 +173,7 @@ export default function AccountPage() {
 
             {/* Profile Tab */}
             {activeTab === 'profile' && (
-              <div style={{ background: '#111111', border: '1px solid #222222', borderTop: '3px solid #C94E0A', padding: '32px' }}>
+              <div className="account-panel" style={{ background: '#111111', border: '1px solid #222222', borderTop: '3px solid #C94E0A', padding: '32px' }}>
                 <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.8rem', color: '#EEEBE3', letterSpacing: '0.08em', marginBottom: '24px' }}>PROFILE</h2>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -183,7 +183,7 @@ export default function AccountPage() {
                     { label: 'Account Type', value: role?.toUpperCase() },
                     { label: 'Member Since', value: userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString('en-KE', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A' },
                   ].map((field, i) => (
-                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '160px 1fr', alignItems: 'center', borderBottom: '1px solid #1a1a1a', paddingBottom: '16px' }}>
+                    <div key={i} className="account-info-row" style={{ display: 'grid', gridTemplateColumns: '160px 1fr', alignItems: 'center', borderBottom: '1px solid #1a1a1a', paddingBottom: '16px' }}>
                       <p style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#7FD4F0' }}>{field.label}</p>
                       <p style={{ fontSize: '14px', color: '#EEEBE3', letterSpacing: '0.06em' }}>{field.value}</p>
                     </div>
@@ -194,7 +194,7 @@ export default function AccountPage() {
 
             {/* Orders Tab */}
             {activeTab === 'orders' && (
-              <div style={{ background: '#111111', border: '1px solid #222222', borderTop: '3px solid #C94E0A', padding: '32px' }}>
+              <div className="account-panel" style={{ background: '#111111', border: '1px solid #222222', borderTop: '3px solid #C94E0A', padding: '32px' }}>
                 <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.8rem', color: '#EEEBE3', letterSpacing: '0.08em', marginBottom: '24px' }}>MY ORDERS</h2>
                 <div style={{ textAlign: 'center', padding: '60px 0' }}>
                   <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.5rem', color: '#333333', letterSpacing: '0.1em', marginBottom: '8px' }}>NO ORDERS YET</p>
@@ -211,7 +211,7 @@ export default function AccountPage() {
 
             {/* Tickets Tab */}
             {activeTab === 'tickets' && (
-              <div style={{ background: '#111111', border: '1px solid #222222', borderTop: '3px solid #C94E0A', padding: '32px' }}>
+              <div className="account-panel" style={{ background: '#111111', border: '1px solid #222222', borderTop: '3px solid #C94E0A', padding: '32px' }}>
                 <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.8rem', color: '#EEEBE3', letterSpacing: '0.08em', marginBottom: '24px' }}>MY TICKETS</h2>
                 {tickets.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '60px 0' }}>

@@ -85,6 +85,41 @@ a, button {
   .hero-btn {
     width: 100%;
   }
+
+  .account-page-shell {
+    padding: 52px 20px 40px !important;
+  }
+
+  .account-layout {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+
+  .account-sidebar,
+  .account-panel {
+    padding: 20px !important;
+  }
+
+  .account-tabs {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .account-tabs button {
+    flex: 1 1 calc(33.333% - 8px) !important;
+    min-width: 0 !important;
+    text-align: center !important;
+  }
+
+  .account-info-row {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .account-info-row p:first-child {
+    margin-bottom: 0 !important;
+  }
 }
 
 body::before {
