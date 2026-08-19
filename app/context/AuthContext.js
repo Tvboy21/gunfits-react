@@ -71,22 +71,45 @@ export function AuthProvider({ children }) {
     return userCredential;
   }
 
-  async function loginWithGoogle() {
-    const provider = new GoogleAuthProvider();
-    const userCredential = await signInWithPopup(auth, provider);
-    // Check if user exists in Firestore
-    const docRef = doc(db, 'users', userCredential.user.uid);
+  async function ensureUserProfile(firebaseUser) {
+    const docRef = doc(db, 'users', firebaseUser.uid);
     const docSnap = await getDoc(docRef);
-    // If user doesn't exist, create their profile
+
     if (!docSnap.exists()) {
       await setDoc(docRef, {
-        name: userCredential.user.displayName || '',
-        email: userCredential.user.email,
+        name: firebaseUser.displayName || '',
+        email: firebaseUser.email,
         role: 'user',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
     }
-    return userCredential;
+  }
+
+  async function loginWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      prompt: 'select_account',
+    });
+
+    try {
+      const userCredential = await signInWithPopup(auth, provider);
+      await ensureUserProfile(userCredential.user);
+      return userCredential;
+    } catch (error) {
+      if (error?.code === 'auth/popup-blocked') {
+        throw new Error('Google sign-in was blocked by the browser. Please allow popups and try again.');
+      }
+
+      if (error?.code === 'auth/cancelled-popup-request') {
+        throw new Error('Google sign-in was cancelled.');
+      }
+
+      if (error?.code === 'auth/configuration-not-found') {
+        throw new Error('Google login is not enabled in your Firebase project. Enable Google sign-in in Firebase Authentication.');
+      }
+
+      throw error;
+    }
   }
 
   async function logout() {

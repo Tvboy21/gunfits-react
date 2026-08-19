@@ -31,7 +31,7 @@ export default function LoginPage() {
     try {
       await login(loginEmail, loginPassword);
       setSuccess('Login successful! Redirecting...');
-      setTimeout(() => { router.push('/'); }, 1500);
+      setTimeout(() => { router.push('/collections'); }, 1500);
     } catch (error) {
       if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
         setErrors({ loginEmail: 'No account found with this email.' });
@@ -67,17 +67,19 @@ export default function LoginPage() {
 
   async function handleGoogleAuth() {
     setErrors({});
+    setSuccess('');
+
     try {
       await loginWithGoogle();
       setSuccess('Login successful! Redirecting...');
-      setTimeout(() => { router.push('/'); }, 1500);
+      setTimeout(() => { router.push('/collections'); }, 1500);
     } catch (error) {
-      if (error.code === 'auth/popup-closed-by-user') {
-        // User cancelled the login, no error to show
-      } else if (error.code === 'auth/network-request-failed') {
+      if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
+        setErrors({ googleAuth: 'Google sign-in was cancelled.' });
+      } else if (error?.code === 'auth/network-request-failed') {
         setErrors({ googleAuth: 'Network error. Please check your connection.' });
       } else {
-        setErrors({ googleAuth: error.message || 'Error during Google authentication.' });
+        setErrors({ googleAuth: error?.message || 'Error during Google authentication.' });
       }
     }
   }
