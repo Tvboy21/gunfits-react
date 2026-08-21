@@ -1,5 +1,4 @@
 'use client';
-// @ts-nocheck
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -24,13 +23,43 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
 
+type ProductRecord = {
+  id?: string;
+  name?: string;
+  price?: number | string;
+  description?: string;
+  images?: string[];
+  imagePublicId?: string;
+  image?: string;
+  relatedProductIds?: string[];
+  sizes?: string[];
+  inStock?: boolean;
+  material?: string;
+  care?: string;
+};
+
+const normalizeProductImages = (productData?: Partial<ProductRecord> & { id?: string }) => {
+  const images = Array.isArray(productData?.images) ? productData.images.filter(Boolean) : [];
+  const primaryImage = productData?.imagePublicId || productData?.image || images[0] || '';
+
+  if (primaryImage && !images.includes(primaryImage)) {
+    images.unshift(primaryImage);
+  }
+
+  return {
+    ...productData,
+    images: images.length > 0 ? images : [],
+    imagePublicId: productData?.imagePublicId || primaryImage,
+  } as ProductRecord;
+};
+
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.id;
   const { addToCart } = useCart();
   
-  const [product, setProduct] = useState<any>(null);
-  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [product, setProduct] = useState<ProductRecord | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<ProductRecord[]>([]);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedImage, setSelectedImage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -39,11 +68,12 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const docRef = doc(db as any, 'products', String(productId));
+        const docRef = doc(db, 'products', String(productId));
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
-          const productData = { id: docSnap.id, ...(docSnap.data() as any) };
+          const rawData = docSnap.data() as Partial<ProductRecord>;
+          const productData = normalizeProductImages({ id: docSnap.id, ...rawData });
           setProduct(productData);
           
           if (productData.images && productData.images.length > 0) {
@@ -53,18 +83,24 @@ export default function ProductDetailPage() {
             setSelectedSize(productData.sizes[0]);
           }
 
-          if (productData.relatedProductIds && productData.relatedProductIds.length > 0) {
+          const relatedIds = Array.isArray(productData.relatedProductIds) ? productData.relatedProductIds : [];
+
+          if (relatedIds.length > 0) {
             const relatedDocs = await Promise.all(
-              (productData.relatedProductIds as any[]).map((id: any) => getDoc(doc(db as any, 'products', String(id))))
+              relatedIds.map((id) => getDoc(doc(db, 'products', String(id))))
             );
             const related = relatedDocs
-              .filter(d => d.exists())
-              .map(d => ({
-                id: d.id,
-                name: d.data().name,
-                price: d.data().price,
-                images: d.data().images || [],
-              }));
+              .filter((d) => d.exists())
+              .map((d) => {
+                const relatedData = normalizeProductImages(d.data() as Partial<ProductRecord>);
+                return {
+                  id: d.id,
+                  name: relatedData.name,
+                  price: relatedData.price,
+                  images: relatedData.images || [],
+                  imagePublicId: relatedData.imagePublicId,
+                } satisfies ProductRecord;
+              });
             setRelatedProducts(related);
           }
         }
@@ -214,13 +250,21 @@ export default function ProductDetailPage() {
                 aspectRatio: '1 / 1',
               }}>
               {selectedImage ? (
-                <CldImage
-                  src={selectedImage}
-                  width={600}
-                  height={600}
-                  alt={product.name}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
+                selectedImage.startsWith('http') || selectedImage.startsWith('data:') ? (
+                  <img
+                    src={selectedImage}
+                    alt={product.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <CldImage
+                    src={selectedImage}
+                    width={600}
+                    height={600}
+                    alt={product.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                )
               ) : (
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666666' }}>
                   No image
@@ -231,7 +275,7 @@ export default function ProductDetailPage() {
             {/* Thumbnail Grid */}
             {product.images && product.images.length > 1 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(70px, 1fr))', gap: '12px' }}>
-                {product.images.map((img: any, idx: number) => (
+                {product.images.map((img: string, idx: number) => (
                   <motion.div
                     key={idx}
                     whileHover={{ scale: 1.05 }}
@@ -244,13 +288,21 @@ export default function ProductDetailPage() {
                       aspectRatio: '1 / 1',
                       background: '#1a1a1a',
                     }}>
-                    <CldImage
-                      src={img}
-                      width={150}
-                      height={150}
-                      alt={`${product.name} ${idx + 1}`}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                    {img.startsWith('http') || img.startsWith('data:') ? (
+                      <img
+                        src={img}
+                        alt={`${product.name} ${idx + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <CldImage
+                        src={img}
+                        width={150}
+                        height={150}
+                        alt={`${product.name} ${idx + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    )}
                   </motion.div>
                 ))}
               </div>
@@ -322,7 +374,7 @@ export default function ProductDetailPage() {
                 SELECT SIZE
               </label>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                {product.sizes?.map((size: any) => (
+                {product.sizes?.map((size: string) => (
                   <motion.button
                     key={size}
                     whileHover={{ scale: 1.1 }}
