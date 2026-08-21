@@ -7,11 +7,12 @@ export function MusicProvider({ children }) {
   const [playing, setPlaying] = useState(false);
   const [audioLoaded, setAudioLoaded] = useState(false);
   const audioRef = useRef(null);
+  const audioFile = '/track2.mp3.mp3';
 
   useEffect(() => {
-    // Lazy load audio - only initialize when user first interacts
     const handleFirstInteraction = () => {
       if (!audioLoaded && audioRef.current) {
+        audioRef.current.src = audioFile;
         audioRef.current.load();
         setAudioLoaded(true);
       }
@@ -31,24 +32,30 @@ export function MusicProvider({ children }) {
   }, [audioLoaded]);
 
   useEffect(() => {
-    if (audioRef.current && audioLoaded) {
-      if (playing) {
-        audioRef.current.play().catch(() => {});
-      } else {
-        audioRef.current.pause();
+    const audio = audioRef.current;
+    if (!audio || !audioLoaded) return;
+
+    if (playing) {
+      audio.currentTime = 0;
+      const playPromise = audio.play();
+      if (playPromise) {
+        playPromise.catch(() => setPlaying(false));
       }
+    } else {
+      audio.pause();
     }
   }, [playing, audioLoaded]);
 
-  const toggleMusic = () => setPlaying(!playing);
+  const toggleMusic = () => setPlaying((prev) => !prev);
 
   return (
     <MusicContext.Provider value={{ playing, toggleMusic, audioRef }}>
       {children}
       <audio
         ref={audioRef}
-        src="/track1.mp3"
+        src={audioFile}
         loop
+        preload="auto"
         style={{ display: 'none' }}
       />
     </MusicContext.Provider>
