@@ -1,13 +1,14 @@
 import { Resend } from 'resend';
+import { NextRequest, NextResponse } from 'next/server';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
     const { email, name } = await request.json();
 
     if (!email) {
-      return Response.json({ error: 'Email is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
     const result = await resend.emails.send({
@@ -77,12 +78,12 @@ export async function POST(request) {
     });
 
     if (result.error) {
-      return Response.json({ error: result.error }, { status: 400 });
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    return Response.json({ success: true, messageId: result.data?.id });
+    return NextResponse.json({ success: true, messageId: result.data?.id });
   } catch (error) {
     console.error('Welcome email error:', error);
-    return Response.json({ error: 'Failed to send email' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
   }
 }
