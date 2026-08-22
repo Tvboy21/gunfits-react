@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Navbar from './components/Navbar';
@@ -7,25 +7,11 @@ import Hero from './components/Hero';
 import Marquee from './components/Marquee';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
-import { initializeApp, getApps } from 'firebase/app';
 
 // Lazy load heavy components
 const Products = dynamic(() => import('./components/Products'), { ssr: false });
 const About = dynamic(() => import('./components/About'), { ssr: true });
 const Footer = dynamic(() => import('./components/Footer'), { ssr: true });
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBPLVqZ_CgguwH9W_yaCWiQiz2nzGniBZM",
-  authDomain: "gunfits.firebaseapp.com",
-  projectId: "gunfits",
-  storageBucket: "gunfits.firebasestorage.app",
-  messagingSenderId: "841263994035",
-  appId: "1:841263994035:web:124e56aa1caff4fa3d8cc6"
-};
-
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app);
 
 const VIDEOS = [
   {
@@ -49,9 +35,6 @@ const TEAM = [
 
 export default function HomePage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [emailStatus, setEmailStatus] = useState('');
-  const [emailLoading, setEmailLoading] = useState(false);
 
   const [videoIndex, setVideoIndex] = useState(0);
   const [showDropModal, setShowDropModal] = useState(true);
@@ -90,30 +73,6 @@ export default function HomePage() {
     }, 15000);
     return () => clearInterval(videoTimer);
   }, []);
-
-  const handleEmailSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!email) {
-      setEmailStatus('Enter your email');
-      return;
-    }
-
-    setEmailLoading(true);
-    try {
-      await addDoc(collection(db, 'emailList'), {
-        email,
-        timestamp: new Date().toISOString(),
-        source: 'homepage',
-      });
-      setEmailStatus('✓ Got it. Exclusive content incoming.');
-      setEmail('');
-      setTimeout(() => setEmailStatus(''), 3000);
-    } catch (error) {
-      setEmailStatus('Error. Try again.');
-      console.error(error);
-    }
-    setEmailLoading(false);
-  };
 
   return (
     <div
@@ -217,7 +176,7 @@ export default function HomePage() {
                   fontWeight: 700,
                   letterSpacing: '0.02em',
                 }}>
-                Ready to see what's new?
+                Ready to see what&apos;s new?
               </p>
 
               {/* Buttons */}
@@ -470,7 +429,7 @@ export default function HomePage() {
                 letterSpacing: '0.05em',
                 marginBottom: '24px',
               }}>
-              WHO'S BEHIND THIS
+              WHO&apos;S BEHIND THIS
             </h2>
             <p
               style={{
@@ -545,7 +504,7 @@ export default function HomePage() {
                     fontWeight: 600,
                     fontStyle: 'italic',
                   }}>
-                  "{member.statement}"
+                  &ldquo;{member.statement}&rdquo;
                 </p>
               </motion.div>
             ))}
@@ -575,7 +534,7 @@ export default function HomePage() {
                   borderRadius: '2px',
                   transition: 'all 0.2s',
                 }}>
-              
+                Meet the Crew
               </motion.button>
             </Link>
           </motion.div>

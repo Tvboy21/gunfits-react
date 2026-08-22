@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -37,7 +37,7 @@ interface Order {
   statusUpdates?: StatusUpdate[];
 }
 
-export default function TrackOrderPage() {
+function TrackOrderContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams?.get('orderId') || '';
   const emailParam = searchParams?.get('email') || '';
@@ -226,5 +226,13 @@ export default function TrackOrderPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function TrackOrderPage() {
+  return (
+    <Suspense fallback={<div style={{ background: '#060606', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EEEBE3' }}>Loading order details...</div>}>
+      <TrackOrderContent />
+    </Suspense>
   );
 }

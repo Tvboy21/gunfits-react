@@ -1,88 +1,158 @@
-import { Resend } from 'resend';
+'use client';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updateProfile,
+} from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
-export async function POST(request) {
+const AuthContext = createContext(null);
+
+async function ensureUserProfile(currentUser, overrides = {}) {
+  const userRef = doc(db, 'users', currentUser.uid);
+  const userSnap = await getDoc(userRef);
+  const existingData = userSnap.exists() ? userSnap.data() : {};
+
+  const nextProfile = {
+    uid: currentUser.uid,
+    email: currentUser.email,
+    displayName: currentUser.displayName || existingData.displayName || overrides.displayName || 'User',
+    role: existingData.role || overrides.role || 'user',
+    updatedAt: new Date().toISOString(),
+    ...(existingData.createdAt ? {} : { createdAt: new Date().toISOString() }),
+    ...overrides,
+  };
+
+  await setDoc(userRef, nextProfile, { merge: true });
+  return nextProfile;
+}
+
+async function sendWelcomeEmailIfNeeded(currentUser, name) {
+  if (!currentUser?.email) return;
+
+  const userRef = doc(db, 'users', currentUser.uid);
+  const userSnap = await getDoc(userRef);
+  const existingData = userSnap.exists() ? userSnap.data() : {};
+
+  if (existingData.welcomeEmailSentAt) return;
+
   try {
-    const { email, name } = await request.json();
-
-    if (!email) {
-      return Response.json({ error: 'Email is required' }, { status: 400 });
-    }
-
-    const result = await resend.emails.send({
-      from: 'GUNFITS <noreply@gunfits.com>',
-      to: email,
-      subject: '🎉 Welcome to GUNFITS - Different Cloth',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #060606; color: #EEEBE3; padding: 40px;">
-          
-          {/* Header */}
-          <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid rgba(201,78,10,0.3); padding-bottom: 24px;">
-            <h1 style="font-size: 32px; margin: 0; letter-spacing: 0.1em; font-weight: 900; color: #C94E0A;">
-              GUNFITS
-            </h1>
-            <p style="font-size: 12px; color: #7FD4F0; letter-spacing: 0.15em; margin: 8px 0 0; text-transform: uppercase;">
-              Different Cloth
-            </p>
-          </div>
-
-          {/* Welcome Message */}
-          <div style="margin-bottom: 40px;">
-            <h2 style="font-size: 24px; color: #EEEBE3; margin-top: 0; letter-spacing: 0.05em;">
-              Welcome to the Movement, ${name}
-            </h2>
-            <p style="font-size: 16px; line-height: 1.6; color: #CCCCCC; margin: 16px 0;">
-              You've just joined a community of people who move different. Raw. Authentic. Nairobi's urban streetwear culture, elevated.
-            </p>
-          </div>
-
-          {/* What's Next */}
-          <div style="background: rgba(201,78,10,0.1); border-left: 3px solid #C94E0A; padding: 20px; margin-bottom: 40px; border-radius: 4px;">
-            <h3 style="font-size: 14px; color: #C94E0A; margin: 0 0 12px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 900;">
-              What's Next?
-            </h3>
-            <ul style="margin: 0; padding-left: 20px; list-style: none;">
-              <li style="margin-bottom: 8px; color: #EEEBE3;">✓ Explore our latest collections</li>
-              <li style="margin-bottom: 8px; color: #EEEBE3;">✓ Get exclusive drop updates</li>
-              <li style="margin-bottom: 8px; color: #EEEBE3;">✓ Join the GUNFITS community</li>
-            </ul>
-          </div>
-
-          {/* CTA Button */}
-          <div style="text-align: center; margin-bottom: 40px;">
-            <a href="https://gunfits-react.vercel.app/collections" style="background: linear-gradient(135deg, #C94E0A, #F0BE00); color: #060606; padding: 14px 32px; text-decoration: none; font-weight: 900; letter-spacing: 0.1em; border-radius: 4px; display: inline-block; text-transform: uppercase; font-size: 12px;">
-              START SHOPPING
-            </a>
-          </div>
-
-          {/* Social */}
-          <div style="text-align: center; padding-top: 24px; border-top: 1px solid rgba(201,78,10,0.2);">
-            <p style="font-size: 12px; color: #7FD4F0; letter-spacing: 0.1em; margin: 0 0 12px;">
-              FOLLOW THE MOVEMENT
-            </p>
-            <a href="https://instagram.com/gun_fits" style="color: #C94E0A; text-decoration: none; font-weight: 900; margin: 0 12px;">
-              @gun_fits
-            </a>
-          </div>
-
-          {/* Footer */}
-          <div style="text-align: center; font-size: 11px; color: #666666; margin-top: 32px; letter-spacing: 0.1em;">
-            <p style="margin: 0;">© 2026 GUNFITS. All rights reserved.</p>
-            <p style="margin: 8px 0 0;">Nairobi, Kenya</p>
-          </div>
-
-        </div>
-      `,
+    const response = await fetch('/api/send-welcome-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: currentUser.email,
+        name: name || currentUser.displayName || 'there',
+      }),
     });
 
-    if (result.error) {
-      return Response.json({ error: result.error }, { status: 400 });
+    if (response.ok) {
+      await setDoc(userRef, { welcomeEmailSentAt: new Date().toISOString() }, { merge: true });
+    }
+  } catch (error) {
+    console.warn('Welcome email failed:', error);
+  }
+}
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [role, setRole] = useState('user');
+  const [loading, setLoading] = useState(true);
+  const auth = getAuth();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+
+      if (currentUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          const savedRole = userDoc.exists() ? userDoc.data().role : 'user';
+          setRole(savedRole || 'user');
+        } catch (error) {
+          console.error('Failed to fetch user role:', error);
+          setRole('user');
+        }
+      } else {
+        setRole('user');
+      }
+
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [auth]);
+
+  const login = async (email, password) => {
+    const { user: currentUser } = await signInWithEmailAndPassword(auth, email, password);
+    await ensureUserProfile(currentUser, { displayName: currentUser.displayName || 'User' });
+    await sendWelcomeEmailIfNeeded(currentUser, currentUser.displayName || 'there');
+    return currentUser;
+  };
+
+  const signup = async (email, password, name) => {
+    const { user: currentUser } = await createUserWithEmailAndPassword(auth, email, password);
+
+    if (name) {
+      await updateProfile(currentUser, { displayName: name });
     }
 
-    return Response.json({ success: true, messageId: result.data?.id });
-  } catch (error) {
-    console.error('Welcome email error:', error);
-    return Response.json({ error: 'Failed to send email' }, { status: 500 });
+    await ensureUserProfile(currentUser, {
+      displayName: name || currentUser.displayName || 'User',
+      role: 'user',
+    });
+
+    await sendWelcomeEmailIfNeeded(currentUser, name || currentUser.displayName || 'there');
+    return currentUser;
+  };
+
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    const { user: currentUser } = await signInWithPopup(auth, provider);
+
+    await ensureUserProfile(currentUser, {
+      displayName: currentUser.displayName || 'Google User',
+      role: 'user',
+    });
+
+    await sendWelcomeEmailIfNeeded(currentUser, currentUser.displayName || 'there');
+    return currentUser;
+  };
+
+  const logout = async () => {
+    await signOut(auth);
+  };
+
+  const value = useMemo(
+    () => ({
+      user,
+      role,
+      loading,
+      isAdmin: role === 'admin',
+      isPremium: role === 'premium' || role === 'admin',
+      login,
+      signup,
+      loginWithGoogle,
+      logout,
+    }),
+    [user, role, loading]
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
   }
+  return context;
 }
